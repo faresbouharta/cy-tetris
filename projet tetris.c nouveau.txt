@@ -1,0 +1,458 @@
+#include <stdio.h>
+
+#include <stdlib.h>
+#include <time.h>
+#define LARG 10
+#define MARGE 3
+#define HAUT 20
+#define NB_PIECE 5
+#define T_PIECE 4
+#define CASE_VIDE ' '
+#define CASE_PLEINE '@'
+
+/* Struct PIECE, represent a piece of tetris */
+typedef struct{
+	char tab[T_PIECE][T_PIECE];
+	int sens ;
+	int tx ;
+	int ty ;
+} piece;
+
+/* Struct jeu, represent the game board */
+typedef struct{
+	char tab[HAUT][MARGE+LARG+MARGE];	
+} jeu ; 
+
+
+
+//Procedure supprLigne() : delete line l in the game of trétris je
+void supprLigne(int l , jeu* je){
+	int i , j;
+	for(i=0;i<LARG+MARGE;i++){//pour toute les colones
+		//on décale vers le bas à partir de l les case de la colone i
+		for(j=l;j>1;j--){
+			je->tab[j][i]=je->tab[j-1][i];
+		}
+	}
+}
+
+// Fonction supprLignesCompletes() : remove complete lines
+int supprLignesCompletes(jeu * je){
+	int i , j , b , c;
+	int t[HAUT];
+	c=0;
+	for(i=0;i<HAUT;i++){
+		b=1;
+		for(j=MARGE;j<LARG+MARGE;j++){
+			if (je->tab[i][j]==CASE_VIDE)
+				b=0;
+		}
+		t[i]=b;
+	}
+	for(i=0;i<HAUT;i++){
+		if(t[i]){
+			supprLigne(i , je);
+			c++;
+		}
+	}	
+	return c; // return the counter
+}
+
+// Procedure initPieceBis() : is used to initialize a piece p of tetris (put only values ' ' )
+void initPieceBis(piece * p ){
+	int i , j;
+	for (i=0 ; i < T_PIECE ; i++){
+		for(j=0; j<T_PIECE ; j++){
+			p->tab[i][j]=CASE_VIDE;
+		}
+	}
+
+}
+
+// Procedure setSensPiece() : assign a direction n to the piece p
+void setSensPiece(piece*p , int n){
+	int tmp;
+	n = n %4;
+	if (n%2 != p->sens%2){
+		tmp = p->tx ;
+		p->tx = p->ty;
+		p->ty = tmp;
+	}
+	p->sens = n;
+}
+
+// Procedure sensAleaPiece(): assign a random direction to the piece p
+void sensAleaPiece(piece* p){
+	setSensPiece(p , rand()%4);
+}
+
+// Procedure initPiece() : Create typical part according to the num
+void initPiece(piece *p , int num){
+	int i;
+	p->sens =0;
+	initPieceBis(p);
+    
+	if (num==0){
+		for(i=0;i<T_PIECE;i++)
+			p->tab[0][i]=CASE_PLEINE; // to fill
+		p->tx=4;
+		p->ty=1;
+	}
+	else if(num == 1){
+		p->tab[0][0]=CASE_PLEINE; // to fill
+		p->tab[0][1]=CASE_PLEINE;
+		p->tab[1][0]=CASE_PLEINE;
+		p->tab[2][0]=CASE_PLEINE;
+		p->tx=2;
+		p->ty=3;
+	}
+	else if(num == 2){
+		p->tab[0][1]=CASE_PLEINE;
+		p->tab[0][0]=CASE_PLEINE;
+		p->tab[1][1]=CASE_PLEINE;
+		p->tab[2][1]=CASE_PLEINE;
+		p->tx=2;
+		p->ty=3;
+	}
+	else if(num == 3){
+		p->tab[0][0]=CASE_PLEINE;
+		p->tab[0][1]=CASE_PLEINE;
+		p->tab[1][0]=CASE_PLEINE;
+		p->tab[1][1]=CASE_PLEINE;
+		p->tx=2;
+		p->ty=2;
+	}	
+	else if(num == 4){
+		p->tab[0][1]=CASE_PLEINE;
+		p->tab[1][0]=CASE_PLEINE;
+		p->tab[1][1]=CASE_PLEINE;
+		p->tab[1][2]=CASE_PLEINE;
+		p->tx=3;
+		p->ty=2;
+	}
+
+}
+
+// Procedure printPiece() : Show part p
+void printPiece(piece p){
+	int i , j ;
+	
+	if (p.sens == 0 ){ // display in 0 direction
+		for (i=0 ; i < p.ty ; i++){
+			for(j=0; j< p.tx ; j++){
+				printf("%c ",p.tab[i][j] );
+			}
+			printf("\n");
+		}
+	}
+	else if (p.sens ==1 ){ // display in direction 1
+		for (i=p.ty-1 ; i >=0 ; i--){
+			for(j=0 ; j<p.tx ; j++){
+				printf("%c ",p.tab[j][i] );
+			}
+			printf("\n");
+		}
+	}
+	else if (p.sens==2){ // display in direction 2
+		for (i=p.ty-1 ; i >=0 ; i--){
+			for(j=p.tx-1 ; j>=0; j--){
+				printf("%c ",p.tab[i][j] );
+			}
+			printf("\n");
+		}		
+	
+	}
+	else if(p.sens ==3){ // display in 3 direction
+		for (i=0 ; i <p.ty ; i++){
+			for(j=p.tx-1 ; j>=0 ; j--){
+				printf("%c ",p.tab[j][i] );
+			}
+			printf("\n");
+		}		
+	}
+}
+
+// printPieces(piece p) : display all directions of the pieces
+void printPieces(piece p){
+	int i , j ;
+	printf(" Sens 1  |  Sens 2  |  Sens 3  |  Sens 4\n");
+	for (i=0 ; i < T_PIECE ; i++){
+		for(j=0; j < T_PIECE ; j++){
+			printf("%c ",p.tab[i][j] );
+		}
+		printf(" | ");
+		
+		for(j=0; j< T_PIECE ; j++){
+			printf("%c ",p.tab[j][T_PIECE-(i+1)] );
+		}
+		printf(" | ");
+		
+		for(j=0; j< T_PIECE ; j++){
+			printf("%c ",p.tab[T_PIECE-(i+1)][T_PIECE-(j+1)] );
+		}
+		printf(" | ");
+		
+		for(j=0; j< T_PIECE ; j++){
+			printf("%c ",p.tab[T_PIECE-(j+1)][i] );
+		}
+		printf("\n");
+	}
+}
+
+
+// Procédure void placeJeu() : To place a in the game board at i ,j 
+void placeJeu(jeu* je , int i , int j , char c){
+	je->tab[i][MARGE+j]=c;
+}
+
+// Procédure void place() : To place a piece in the game
+void place (jeu* je , int a ,int b, piece p){
+		int i , j ,cx,cy;
+		cx = 0 ; cy =0;
+		if (p.sens ==0 ){ // in the case of direction 0
+			for (i=0 ; i < p.ty ; i++){
+				cy=0;
+				for(j=0; j< p.tx ; j++){
+					if (p.tab[i][j] == CASE_PLEINE){
+						//printf("t[%d][%d]\n",a+i,b+j);
+						placeJeu( je , a+cx ,b+cy ,  p.tab[i][j] );
+					}
+					cy++;
+				}
+				cx++;
+
+			}
+		}
+		else if (p.sens ==1 ){ // in the case of direction 1
+			for (i=p.ty-1 ; i >=0 ; i--){
+				cy=0;
+				for(j=0 ; j<p.tx ; j++){
+					if (p.tab[j][i] == CASE_PLEINE)
+						placeJeu( je , a+cx ,b+cy ,  p.tab[j][i] );
+					cy++;
+				}
+				cx++;
+			}
+		}
+		else if (p.sens==2){ // in the case of direction 2
+			for (i=p.ty-1 ; i >=0 ; i--){
+				cy=0;
+				for(j=p.tx-1 ; j>=0; j--){
+					if (p.tab[i][j] == CASE_PLEINE)
+						placeJeu( je , a+cx ,b+cy ,  p.tab[i][j] );
+					cy++;
+				}
+				cx++;
+
+			}		
+		
+		}
+		else if(p.sens ==3){  // in the case of direction 3
+			for (i=0 ; i <p.ty ; i++){
+				cy=0;
+				for(j=p.tx-1 ; j>=0 ; j--){
+					if (p.tab[j][i] == CASE_PLEINE)
+						placeJeu( je , a+cx ,b+cy ,  p.tab[j][i] );
+					cy++;
+				}
+				cx++;
+			}		
+		
+		}
+}
+
+// Procédure void estPlacableBis() : check if space is available
+int estPlacableBis(jeu* je, int a, int b, piece p){
+		int i , j ;
+		int cx , cy;
+		cx =0;
+		cy=0;
+		if (p.sens ==0 ){ // sens de la 0
+			for (i=0 ; i < p.ty ; i++){
+				cy=0;
+				for(j=0; j< p.tx ; j++){
+					if (p.tab[i][j] == CASE_PLEINE){
+						//printf("t[%d][%d]\n",a+i,b+j);
+						if( je->tab[a+cx][MARGE+b+cy]==CASE_PLEINE)
+							return 0;
+					}
+					cy++;
+				}
+				cx++;
+			}
+		}
+		else if (p.sens ==1 ){ // sense of 1
+			for (i=p.ty-1 ; i >=0 ; i--){
+				cy=0;
+				for(j=0 ; j<p.tx ; j++){
+					if (p.tab[j][i] == CASE_PLEINE){
+						//printf("i%d j%d tab[j][i]%c a+i%d b+j%d",i,j,j->tab[a+i][b+j] ,a+i , b+j);
+						if( je->tab[a+cx][MARGE+b+cy]==CASE_PLEINE)
+							return 0;
+					}
+					cy++;
+				}
+				cx++;
+				
+			}
+		}
+		else if (p.sens==2){ // sense of 2
+			for (i=p.ty-1 ; i >=0 ; i--){
+				cy=0;
+				for(j=p.tx-1 ; j>=0; j--){
+					if (p.tab[i][j] == CASE_PLEINE){
+						if( je->tab[a+cx][MARGE+b+cy]==CASE_PLEINE)
+							return 0;
+					}
+					cy++;
+				}
+				cx++;
+			}		
+		
+		}
+		else if(p.sens ==3){ // sense of 3
+			for (i=0 ; i <p.ty ; i++){
+				cy=0;
+				for(j=p.tx-1 ; j>=0 ; j--){
+					if (p.tab[j][i] == CASE_PLEINE){
+						if( je->tab[a+cx][MARGE+b+cy]==CASE_PLEINE)
+							return 0;
+					}
+					cy++;
+				}
+				cx++;
+			}		
+		}
+		return 1;
+}
+
+// Fonction estPlacable() : check where it can be placed, return 1 if possible 0 otherwise
+int estPlacable (jeu * je , int a , int b , piece p){
+	//printf("est placable %d , %d\n",a,b);
+	if((a+p.ty) > (HAUT)){
+		//printf("a %d , ty %d , Haut%d",a ,p.ty , HAUT );
+		return 0;
+	}
+	if ( (b+ p.tx) > (MARGE+LARG) ){
+		//printf("a %d , tx %d , MARGE+LARGE%d",a ,p.tx , MARGE+LARG );
+		return 0;
+	}
+	return estPlacableBis ( je , a , b , p);
+}
+
+int placeColone(jeu* je , int col , piece p){
+	int i = 0;
+	
+	while(estPlacable(je , i+1 , col , p)){
+			i++;
+			//printf("%d\n",i);
+	}
+	if (i==0){
+		return 0;
+	}
+	else{
+		//printf("\nplace %d , %i \n",i , col);
+		place(je ,i , col , p);
+		return 1;
+	}
+}
+
+// Procedure to initialize the empty game board
+void initJeu( jeu *j){
+	int i , y;
+	for(i=0 ; i<HAUT ; i++){
+		for (y=0;y<MARGE+LARG+MARGE ; y++){
+			j->tab[i][y]=CASE_VIDE;
+		}
+	}
+}
+
+// Procedure printJeu() : to simply display the game board
+void printJeu( jeu j){
+	
+	int i , y ;
+	printf("Voici votre grille :\n");
+	for(i=0 ; i<LARG ; i++){
+		printf(" %c",'A'+i);
+	}
+	printf("\n");
+	for(i=0 ; i<HAUT ; i++){
+		//printf("%d",i);
+		for (y=MARGE;y<MARGE+LARG ; y++){
+			printf("|%c",j.tab[i][y]);
+		}
+		printf("|\n");
+	}
+	//printf("###########################################\n");
+}
+
+// Procedure initPieceAlea() : to initialize the random piece p among the 4
+void initPieceAlea(piece * p ){
+	int np , sp;
+	np = rand()%NB_PIECE ;
+	sp = rand()%4;
+	initPiece(p , np);
+	setSensPiece(p , sp);
+
+}
+
+// Fonction estPerdu() : Test that returns 1 if the game is over or not
+int estPerdu(jeu j){
+	int i;
+	for(i=MARGE;i<LARG+MARGE;i++){
+		if (j.tab[0][i]!=CASE_VIDE)
+			return 1;
+	}
+	return 0;
+}
+
+int main(){
+	int perdu , nbLignes , colone , pos;
+	char c;	
+	jeu j;
+	piece p;
+	perdu = 0;
+	srand(time(NULL));
+	int i;
+	/*** Game Initialization */
+	initJeu(&j);
+	nbLignes = 0;
+	
+	/* Let's go */
+	while(!perdu){
+	    /* Until the game is over, let's start again */ 
+	    
+	    /*** Show board */
+		printf("Lignes : %d\n",nbLignes);
+		printJeu(j);
+		initPieceAlea(&p);
+		printPieces(p); // Display the possible and conceivable meanings for the p
+		
+		/*** Seize meaning */
+		printf("sens ?\n");
+		while( (c= getchar() )== '\n');
+		    pos=c-'0';
+		    
+		if ((pos>0)&&(pos <=4))
+		    setSensPiece(&p , pos-1); //change of direction of the room
+		
+		/*** Seize meaning */
+		printf("colone ?\n");	
+		while( (c= getchar() )== '\n');
+		    colone=c-'A'; // column selection
+		//printf("numcolone %d\n",colone);
+		if( (colone < 0) || (colone+p.tx>LARG))
+			colone=3; 
+		
+
+		/*** Game over ? */
+		perdu =  ! placeColone(&j , colone , p);
+		
+		/*** Comptage + Suppression des alignements faits et mise a jour du plateau */
+		nbLignes += supprLignesCompletes(&j);
+	}
+	printf("Jeu perdu !!\n");
+	exit (0);
+
+}
+
